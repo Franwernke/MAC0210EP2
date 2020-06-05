@@ -2,7 +2,7 @@ x = 0;
 y = 0;
 tam = 100;
 #{
-  Função que define a imagem (f(x, y))
+  Função que define a imagem: f(x, y)
 #}
 
 function result = f(x, y)
@@ -10,17 +10,18 @@ function result = f(x, y)
 endfunction
 
 #{
-  Função que avalia o polinomio p(x, y)
+  Função que avalia o polinômio p(x, y) dados 4 coeficientes no vetor "a"
 #} 
 
 function result = p(a, x, y)
   result = a(1,1) + a(2,1)*x + a(3,1)*y + a(4,1)*x*y;
 endfunction
 
-#{
-  Recebe o ponto superior direito do quadrado interpolado
-#}
-for i = (1:4)
+for t = (1:4)
+    #{
+      Recebe o ponto superior direito do quadrado interpolado
+    #}
+
     x = input("Digite a coordenada x: \n");
     y = input("Digite a coordenada y: \n");
 
@@ -49,43 +50,51 @@ for i = (1:4)
 
     a = inv(matrix_x_y) * matrix_fQ;
 
+    #{
+        Define a matriz-imagem usando a função real f(x, y) e o polinômio
+        p(x, y) para compararmos a interpolação e a imagem real
+    #}
+    
     matriz_f_parcial = zeros(tam, tam);
     matriz_a_parcial = zeros(tam, tam);
 
     file_id = fopen("arq1", "w");
 
+    #{
+        h é o passo entre um ponto e outro que aplicamos a interpolação/função.
+    #}
+    
     h = 0.01;
+    
+    #{
+        Para cada ponto do Quadrado de tam x tam, 
+        fazemos f(x_1 + passo, y_1 + passo) para compor a imagem original, 
+        e p(x_1 + passo, y_1 + passo) para compor a imagem interpolada.
+    #}
+    
     for i = (1:tam)
       for j = (1:tam)
-        matriz_f(tam+1-i, j) = f((x_1 + (j-1)*h), (y_1 + (i-1)*h));
-        matriz_a(tam+1-i, j) = p(a, (x_1 + (j-1)*h), (y_1 + (i-1)*h));
+        matriz_f_parcial(tam+1-i, j) = f((x_1 + (j-1)*h), (y_1 + (i-1)*h));
+        matriz_a_parcial(tam+1-i, j) = p(a, (x_1 + (j-1)*h), (y_1 + (i-1)*h));
         fprintf(file_id, "%.3f ", matriz_a_parcial(tam+1-i, j));
       endfor
       fprintf(file_id, "\n");
     endfor
-    if i == 1
-      matriz_f(1,1) = matriz_f_parcial;
+    
+    #{
+        O quadrado então criado é adicionado a imagem maior, sempre da equerda
+        superior para a direita inferior
+    #}
+    
+    if t == 1 || t == 2
+      matriz_f(1,t) = matriz_f_parcial;
+    elseif t == 3 || t == 4
+      matriz_f(2,t-2) = matriz_f_parcial;
     endif
-    if i == 2
-      matriz_f(1,2) = matriz_f_parcial;
-    endif
-    if i == 3
-      matriz_f(2,1) = matriz_f_parcial;
-    endif
-    if i == 4
-      matriz_f(2,2) = matriz_f_parcial;
-    endif
-    if i == 1
-      matriz_a(1,1) = matriz_a_parcial;
-    endif
-    if i == 2
-      matriz_a(1,2) = matriz_a_parcial;
-    endif
-    if i == 3
-      matriz_a(2,1) = matriz_a_parcial;
-    endif
-    if i == 4
-      matriz_a(2,2) = matriz_a_parcial;
+    if t == 1 || t == 2
+      matriz_a(1,t) = matriz_a_parcial;
+    elseif t == 3 || t == 4
+      matriz_a(2,t-2) = matriz_a_parcial;
     endif
     
 endfor
