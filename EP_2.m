@@ -21,6 +21,82 @@ function result = B(x, y)
 endfunction
 
 #{
+Bilinear!
+#}
+
+function result = p(a, x, y)
+  result = a(1,1) + a(2,1)*x + a(3,1)*y + a(4,1)*x*y;
+  return;
+endfunction
+
+function result = bilinear(decompressed_RGB, k, h)
+  i = 1;
+  j = 1;
+  while(i <= rows(decompressed_RGB) - k - 1)
+    while(j <= columns(decompressed_RGB) - k - 1)
+      
+      x_1 = i + k + 1;
+      y_1 = j;
+      x_2 = i;
+      y_2 = j + k + 1;
+      
+      matrix_x_y = [1, x_1, y_1, x_1*y_1;...
+                    1, x_1, y_2, x_1*y_2;...
+                    1, x_2, y_1, x_2*y_1;...
+                    1, x_2, y_2, x_2*y_2];
+              
+      matrix_fQ_R = [decompressed_RGB(x_1, y_1, 1);...
+                   decompressed_RGB(x_1, y_2, 1);...
+                   decompressed_RGB(x_2, y_1, 1);...
+                   decompressed_RGB(x_2, y_2, 1)];
+      matrix_fQ_G = [decompressed_RGB(x_1, y_1, 2);...
+                   decompressed_RGB(x_1, y_2, 2);...
+                   decompressed_RGB(x_2, y_1, 2);...
+                   decompressed_RGB(x_2, y_2, 2)];
+      matrix_fQ_B = [decompressed_RGB(x_1, y_1, 3);...
+                   decompressed_RGB(x_1, y_2, 3);...
+                   decompressed_RGB(x_2, y_1, 3);...
+                   decompressed_RGB(x_2, y_2, 3)];
+
+      a_R = inv(matrix_x_y) * matrix_fQ_R;
+      a_G = inv(matrix_x_y) * matrix_fQ_G;
+      a_B = inv(matrix_x_y) * matrix_fQ_B;
+      
+      z = i;
+      w = j;
+      while(z <= i + k + 1)
+        while(w <= j + k + 1)
+        
+          if(decompressed_RGB(z, w, 1) == 0)
+            decompressed_RGB(z, w, 1) = p(a_R, (w-1)*h, (i-1)*h);
+          endif
+          
+          if(decompressed_RGB(z, w, 2) == 0)
+            decompressed_RGB(z, w, 2) = p(a_G, (w-1)*h, (i-1)*h);
+          endif
+          
+          if(decompressed_RGB(z, w, 3) == 0)
+            decompressed_RGB(z, w, 3) = p(a_B, (w-1)*h, (i-1)*h);
+          endif
+          
+          w = w + 1;
+        endwhile
+        w = j;
+        z = z + 1;
+      endwhile
+      
+      j = j + k + 1;
+    endwhile
+    j = 1;
+    i = i + k + 1;
+  endwhile
+  
+  result = decompressed_RGB;
+  return;
+  
+endfunction
+
+#{
 Função que gera imagem! ela pega uma matriz de 3 dimensões - uma pra R, uma
 pra G e uma pra B e calcula o valor das respectivas funções em tam*tam pon-
 tos. Esses pontos começam em (1, 1) e vão até (1 + tam*h, 1 + tam*h). No
@@ -56,9 +132,9 @@ function result = generate_image(tam)
     i = i + 1;
   endwhile
   
-  imwrite(matriz_RGB, "imagem_RGB.tif");
+  imwrite(matriz_RGB, "imagem_RGB.png");
   
-  result = "imagem_RGB.tif";
+  result = "imagem_RGB.png";
   return;
   
 endfunction
@@ -73,7 +149,7 @@ mesmo! Yuhuuul! O resto é tudo baseado na técnica de compressão que o pro-
 fessor sugeriu no enunciado do EP.
 #}
 
-function compress(originalImg, k)
+function result = compress(originalImg, k)
   
   [matriz, MAP] = imread(originalImg);
   [X, map] = rgb2ind(matriz);
@@ -88,8 +164,12 @@ function compress(originalImg, k)
   #}
   
   p = rows(matriz_RGB);
-  n = (p - k)/(1 + k);
+  n = floor((p + k)/(1 + k));
+  
+  #{
+  display(p);
   display(n);
+  #}
   
   compressed_RGB = zeros(n, n, 3);
   i = 1;
@@ -97,9 +177,9 @@ function compress(originalImg, k)
   i_n = 1;
   j_n = 1;
   while(i <= p)
-    if(abs(rem(i,k))*sign(k) == 0)
+    if(abs(rem(i,k+1))*sign(k) == 0)
       while(j <= p)
-        if(abs(rem(j,k))*sign(k) == 0)
+        if(abs(rem(j,k+1))*sign(k) == 0)
           compressed_RGB(i_n, j_n, 1) = matriz_RGB(i, j, 1);
           compressed_RGB(i_n, j_n, 2) = matriz_RGB(i, j, 2);
           compressed_RGB(i_n, j_n, 3) = matriz_RGB(i, j, 3);
@@ -114,11 +194,81 @@ function compress(originalImg, k)
     i = i + 1;
   endwhile
   
-  imwrite(compressed_RGB, "compressed_RGB.tif");
+  #{
+  display(rows(compressed_RGB));
+  #}
+  
+  imwrite(compressed_RGB, "compressed_RGB.png");
+  
+  result = "compressed_RGB.png";
+  return;
+  
+endfunction
+
+function result = decompress(compressedImg, method, k, h)
+  
+  [matriz, MAP] = imread(compressedImg);
+  [X, map] = rgb2ind(matriz);
+  matriz_RGB = ind2rgb(X, map);
+  
+  n = rows(matriz_RGB);
+  p = n + (n - 1)*k;
+  
+  #{
+  display(n)
+  display(p);
+  #}
+  
+  decompressed_RGB = zeros(p, p, 3);
+  i = 1;
+  j = 1;
+  i_p = 1;
+  j_p = 1;
+  while(i <= n)
+    aux_i = i_p;
+    while(i_p <= aux_i + k)
+      if(i_p == aux_i)
+        while(j <= n)
+          aux_j = j_p;
+          while(j_p <= aux_j + k)
+            if(j_p == aux_j)
+              decompressed_RGB(i_p, j_p, 1) = matriz_RGB(i, j, 1);
+              decompressed_RGB(i_p, j_p, 2) = matriz_RGB(i, j, 2);
+              decompressed_RGB(i_p, j_p, 3) = matriz_RGB(i, j, 3);
+            endif
+            j_p = j_p + 1;
+          endwhile
+          j = j + 1;
+        endwhile
+      endif
+      j_p = 1;
+      i_p = i_p + 1;
+    endwhile
+    j = 1;
+    i = i + 1;
+  endwhile
+  
+  #{
+  display(rows(decompressed_RGB));
+  #}
+  if(method == 1)
+    decompressed_RGB = bilinear(decompressed_RGB, k, h);
+  endif
+  
+  imwrite(decompressed_RGB, "decompressed_RGB.png");
+  
+  result = "decompressed_RGB.png";
+  return;
   
 endfunction
 
 tam = 500;
+k = 2;
+h = 0.001;
 
 imagem_RGB = generate_image(tam);
-compress(imagem_RGB, 2);
+compressed_RGB = compress(imagem_RGB, k);
+decompressed_RGB_1 = decompress(compressed_RGB, 1, k, h);
+#{
+decompressed_RGB_2 = decompress(compressed_RGB, 2, k, h);
+#}
