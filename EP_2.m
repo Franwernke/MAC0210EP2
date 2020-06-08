@@ -35,24 +35,31 @@ function result = bilinear(decompressed_RGB, k, h)
   while(i <= rows(decompressed_RGB) - k - 1)
     while(j <= columns(decompressed_RGB) - k - 1)
       
-      x_1 = i + k + 1;
-      y_1 = j;
-      x_2 = i;
-      y_2 = j + k + 1;
+      x_2 = i + k + 1;
+      y_2 = j;
+      x_1 = i;
+      y_1 = j + k + 1;
       
-      matrix_x_y = [1, x_1, y_1, x_1*y_1;...
-                    1, x_1, y_2, x_1*y_2;...
-                    1, x_2, y_1, x_2*y_1;...
-                    1, x_2, y_2, x_2*y_2];
+      x_1_r = (x_1 - 1)*h;
+      x_2_r = (x_2 - 1)*h;
+      y_1_r = (y_1 - 1)*h;
+      y_2_r = (y_2 - 1)*h;
+      
+      matrix_x_y = [1, x_1_r, y_1_r, x_1_r*y_1_r;...
+                    1, x_1_r, y_2_r, x_1_r*y_2_r;...
+                    1, x_2_r, y_1_r, x_2_r*y_1_r;...
+                    1, x_2_r, y_2_r, x_2_r*y_2_r];
               
       matrix_fQ_R = [decompressed_RGB(x_1, y_1, 1);...
                    decompressed_RGB(x_1, y_2, 1);...
                    decompressed_RGB(x_2, y_1, 1);...
                    decompressed_RGB(x_2, y_2, 1)];
+                   
       matrix_fQ_G = [decompressed_RGB(x_1, y_1, 2);...
                    decompressed_RGB(x_1, y_2, 2);...
                    decompressed_RGB(x_2, y_1, 2);...
                    decompressed_RGB(x_2, y_2, 2)];
+                   
       matrix_fQ_B = [decompressed_RGB(x_1, y_1, 3);...
                    decompressed_RGB(x_1, y_2, 3);...
                    decompressed_RGB(x_2, y_1, 3);...
@@ -68,15 +75,15 @@ function result = bilinear(decompressed_RGB, k, h)
         while(w <= j + k + 1)
         
           if(decompressed_RGB(z, w, 1) == 0)
-            decompressed_RGB(z, w, 1) = p(a_R, (w-1)*h, (i-1)*h);
+            decompressed_RGB(z, w, 1) = p(a_R, (z-1)*h, (w-1)*h);
           endif
           
           if(decompressed_RGB(z, w, 2) == 0)
-            decompressed_RGB(z, w, 2) = p(a_G, (w-1)*h, (i-1)*h);
+            decompressed_RGB(z, w, 2) = p(a_G, (z-1)*h, (w-1)*h);
           endif
           
           if(decompressed_RGB(z, w, 3) == 0)
-            decompressed_RGB(z, w, 3) = p(a_B, (w-1)*h, (i-1)*h);
+            decompressed_RGB(z, w, 3) = p(a_B, (z-1)*h, (w-1)*h);
           endif
           
           w = w + 1;
@@ -251,9 +258,16 @@ function result = decompress(compressedImg, method, k, h)
   #{
   display(rows(decompressed_RGB));
   #}
+  
   if(method == 1)
     decompressed_RGB = bilinear(decompressed_RGB, k, h);
   endif
+  
+  #{
+  if(method == 2)
+    decompressed_RGB = bicubic(decompressed_RGB, k, h);
+  endif
+  #}
   
   imwrite(decompressed_RGB, "decompressed_RGB.png");
   
