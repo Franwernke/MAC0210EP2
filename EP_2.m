@@ -24,7 +24,7 @@ endfunction
 Bilinear!
 #}
 
-function result = p(a, x, y)
+function result = p_1(a, x, y)
   result = a(1,1) + a(2,1)*x + a(3,1)*y + a(4,1)*x*y;
   return;
 endfunction
@@ -51,19 +51,19 @@ function result = bilinear(decompressed_RGB, k, h)
                     1, x_2_r, y_2_r, x_2_r*y_2_r];
               
       matrix_fQ_R = [decompressed_RGB(x_1, y_1, 1);...
-                   decompressed_RGB(x_1, y_2, 1);...
-                   decompressed_RGB(x_2, y_1, 1);...
-                   decompressed_RGB(x_2, y_2, 1)];
+                     decompressed_RGB(x_1, y_2, 1);...
+                     decompressed_RGB(x_2, y_1, 1);...
+                     decompressed_RGB(x_2, y_2, 1)];
                    
       matrix_fQ_G = [decompressed_RGB(x_1, y_1, 2);...
-                   decompressed_RGB(x_1, y_2, 2);...
-                   decompressed_RGB(x_2, y_1, 2);...
-                   decompressed_RGB(x_2, y_2, 2)];
+                     decompressed_RGB(x_1, y_2, 2);...
+                     decompressed_RGB(x_2, y_1, 2);...
+                     decompressed_RGB(x_2, y_2, 2)];
                    
       matrix_fQ_B = [decompressed_RGB(x_1, y_1, 3);...
-                   decompressed_RGB(x_1, y_2, 3);...
-                   decompressed_RGB(x_2, y_1, 3);...
-                   decompressed_RGB(x_2, y_2, 3)];
+                     decompressed_RGB(x_1, y_2, 3);...
+                     decompressed_RGB(x_2, y_1, 3);...
+                     decompressed_RGB(x_2, y_2, 3)];
 
       a_R = inv(matrix_x_y) * matrix_fQ_R;
       a_G = inv(matrix_x_y) * matrix_fQ_G;
@@ -75,15 +75,15 @@ function result = bilinear(decompressed_RGB, k, h)
         while(w <= j + k + 1)
         
           if(decompressed_RGB(z, w, 1) == 0)
-            decompressed_RGB(z, w, 1) = p(a_R, (z-1)*h, (w-1)*h);
+            decompressed_RGB(z, w, 1) = p_1(a_R, (z-1)*h, (w-1)*h);
           endif
           
           if(decompressed_RGB(z, w, 2) == 0)
-            decompressed_RGB(z, w, 2) = p(a_G, (z-1)*h, (w-1)*h);
+            decompressed_RGB(z, w, 2) = p_1(a_G, (z-1)*h, (w-1)*h);
           endif
           
           if(decompressed_RGB(z, w, 3) == 0)
-            decompressed_RGB(z, w, 3) = p(a_B, (z-1)*h, (w-1)*h);
+            decompressed_RGB(z, w, 3) = p_1(a_B, (z-1)*h, (w-1)*h);
           endif
           
           w = w + 1;
@@ -102,7 +102,58 @@ function result = bilinear(decompressed_RGB, k, h)
   return;
   
 endfunction
+#{
+function result = p_2(a, x, y)
+  result = 0;
+  i = 1;
+  while(i <= 4)
+    j = 1;
+    while(j <= 4)
+      result = result + a(i, j)*(x^(i-1))*(y^(j-1));
+      j = j + 1;
+    endwhile
+    i = i + 1;
+  endwhile
+  return;
+endfunction
 
+function result = bicubic(decompressed_RGB, k, h)
+    i = 1;
+    while(i <= rows(decompressed_RGB) - k + 1)
+      j = 1;
+      while(j <= columns(descompressed_RGB) - k + 1)
+        
+        x_2 = i + k + 1;
+        y_2 = j;
+        x_1 = i;
+        y_1 = j + k + 1;
+        
+        x_1_r = (x_1 - 1)*h;
+        x_2_r = (x_2 - 1)*h;
+        y_1_r = (y_1 - 1)*h;
+        y_2_r = (y_2 - 1)*h;
+        
+        
+                     
+        if (i == 1)
+        matriz_fs_R = [decompressed_RGB(x_1, y_1, 1), decompressed_RGB(x_1, y_2, 1), f_y(decompressed_RGB(x_1, y_2, 1), y_1), f_y(x_1, y_2);...
+                     decompressed_RGB(x_2, y_1, 1), decompressed_RGB(x_2, y_2, 1), f_y(x_2, y_1), f_y(x_2, y_2);...
+                     f_x(x_1, y_1), f_x(x_1, y_2), f_y_x(x_1, y_1), f_y_x(x_1, y_2);...
+                     f_x(x_2, y_1), f_x(x_2, y_2), f_y_x(x_2, y_1), f_y_x(x_2, y_2)];
+             
+        B = [1, 0, 0, 0;...
+             0, 0, 1, 0;...
+            -3, 3, -2, -1;...
+             2, -2, 1, 1];
+        
+        
+        j += 1;
+      endwhile
+      i += 1;
+    endwhile
+    
+endfunction
+#}
 #{
 Função que gera imagem! ela pega uma matriz de 3 dimensões - uma pra R, uma
 pra G e uma pra B e calcula o valor das respectivas funções em tam*tam pon-

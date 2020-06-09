@@ -6,29 +6,35 @@ function result = f(x, y)
   return;
 endfunction
 
-function result = f_x(x, y)
+function result = f_x(x, y, h)
+  
+    result = cos(x)*cos(y);
   #{
-  result = (f(x+0.1, y) - f(x-0.1, y))/0.2;
+  result = (f(x+h, y) - f(x-h, y))/2*h;
   #}
-  result = cos(x)*cos(y);
   return;
 endfunction
 
-function result = f_y(x, y)
+function result = f_y(x, y, h)
   #{
-  result = (f(x, y+0.1) - f(x, y-0.1))/0.2;
+  result = (f(x, y+h) - f(x, y-h))/2*h;
   #}
-  result = sin(x)*(-sin(y));
+    result = sin(x)*(-sin(y));
+  
   return;
 endfunction
 
-function result = f_y_x(x, y)
+function result = f_y_x(x, y, h)
+  
+    result = cos(x)*(-sin(y));
+  
   #{
-  result = (f_y(x+0.1, y) - f_y(x-0.1, y))/0.2;
+  result = (f_y(x+h, y, h) - f_y(x-h, y, h))/2*h;
   #}
-  result = cos(x)*(-sin(y));
   return;
 endfunction
+
+
 
 function result = p(a, x, y)
   result = 0;
@@ -54,10 +60,12 @@ x_1 = x_2 - 1;
 y_2 = ceil(y);
 y_1 = y_2 - 1;
 
-matriz_fs = [f(x_1, y_1), f(x_1, y_2), f_y(x_1, y_1), f_y(x_1, y_2);...
-             f(x_2, y_1), f(x_2, y_2), f_y(x_2, y_1), f_y(x_2, y_2);...
-             f_x(x_1, y_1), f_x(x_1, y_2), f_y_x(x_1, y_1), f_y_x(x_1, y_2);...
-             f_x(x_2, y_1), f_x(x_2, y_2), f_y_x(x_2, y_1), f_y_x(x_2, y_2)];
+h = 0.005;
+
+matriz_fs = [f(x_1, y_1), f(x_1, y_2), f_y(x_1, y_1, h), f_y(x_1, y_2, h);...
+             f(x_2, y_1), f(x_2, y_2), f_y(x_2, y_1, h), f_y(x_2, y_2, h);...
+             f_x(x_1, y_1, h), f_x(x_1, y_2, h), f_y_x(x_1, y_1, h), f_y_x(x_1, y_2, h);...
+             f_x(x_2, y_1, h), f_x(x_2, y_2, h), f_y_x(x_2, y_1, h), f_y_x(x_2, y_2, h)];
              
 B = [1, 0, 0, 0;...
      0, 0, 1, 0;...
@@ -77,7 +85,7 @@ matriz_a_1 = zeros(200, 200);
 #}
 
 i = 1;
-h = 0.005;
+
 while(i <= 200)
   j = 1;
   while(j <= 200)
@@ -88,4 +96,4 @@ while(i <= 200)
   i = i + 1;
 endwhile
 
-imagesc(matriz_f_1);
+imagesc(matriz_a_1);
