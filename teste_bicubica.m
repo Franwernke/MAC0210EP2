@@ -8,32 +8,30 @@ endfunction
 
 function result = f_x(x, y, h)
   
-    result = cos(x)*cos(y);
-  #{
+  #  result = cos(x)*cos(y);
+  
   result = (f(x+h, y) - f(x-h, y))/2*h;
-  #}
+  
   return;
 endfunction
 
 function result = f_y(x, y, h)
-  #{
+  
+  #  result = sin(x)*(-sin(y));
+  
   result = (f(x, y+h) - f(x, y-h))/2*h;
-  #}
-    result = sin(x)*(-sin(y));
   
   return;
 endfunction
 
 function result = f_y_x(x, y, h)
   
-    result = cos(x)*(-sin(y));
+  #  result = cos(x)*(-sin(y));
   
-  #{
   result = (f_y(x+h, y, h) - f_y(x-h, y, h))/2*h;
-  #}
+  
   return;
 endfunction
-
 
 
 function result = p(a, x, y)
@@ -42,7 +40,7 @@ function result = p(a, x, y)
   while(i <= 4)
     j = 1;
     while(j <= 4)
-      result = result + a(i, j)*(x^(i-1))*(y^(j-1));
+      result = result + a(j, i)*(x^(i-1))*(y^(j-1));
       j = j + 1;
     endwhile
     i = i + 1;
@@ -84,16 +82,17 @@ matriz_a_1 = zeros(200, 200);
   row where we stand and every 200 pixels we change the row up.  
 #}
 
-i = 1;
 
+i = 1;
 while(i <= 200)
   j = 1;
   while(j <= 200)
     matriz_f_1(201-i, j) = f((x_1 + (j-1)*h), (y_1 + (i-1)*h));
-    matriz_a_1(201-i, j) = p(a, ((x_1 + (j-1))*h), ((y_1 + (i-1))*h));
+    matriz_a_1(201-i, j) = p(a, x_1 + (j-1)*h, (y_1 + (i-1)*h));
     j = j + 1;
   endwhile
   i = i + 1;
 endwhile
 
+disp(a);
 imagesc(matriz_a_1);

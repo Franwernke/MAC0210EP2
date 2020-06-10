@@ -327,6 +327,62 @@ function result = decompress(compressedImg, method, k, h)
   
 endfunction
 
+function result = calculateError(imagem_RGB, decompressed_RGB)
+    
+    [matriz, MAP] = imread(decompressed_RGB);
+    [X, map] = rgb2ind(matriz);
+    decompressed_RGB = ind2rgb(X, map);
+    
+    [matriz, MAP] = imread(imagem_RGB);
+    [X, map] = rgb2ind(matriz);
+    imagem_RGB = ind2rgb(X, map);
+    
+    errR = 0;
+    errG = 0;
+    errB = 0;
+    i = 1;
+    while (i <= rows(decompressed_RGB))
+        j = 1;
+        while (j <= columns(decompressed_RGB))
+            if (imagem_RGB(i, j, 1) != 0)
+              norm = (decompressed_RGB(i, j, 1) - imagem_RGB(i, j, 1))^2;
+              errR += norm/(imagem_RGB(i, j, 1)^2);              
+            endif
+            j += 1;
+        endwhile
+        i += 1;
+    endwhile
+    errR = sqrt(errR);
+    i = 1;
+    while (i <= rows(decompressed_RGB))
+        j = 1;
+        while (j <= columns(decompressed_RGB))
+            if (imagem_RGB(i, j, 2) != 0)
+                norm = (decompressed_RGB(i, j, 2) - imagem_RGB(i, j, 2))^2;
+                errG += norm/(imagem_RGB(i, j, 2)^2);
+            endif
+            j += 1;
+        endwhile
+        i += 1;
+    endwhile
+    errG = sqrt(errG);
+    i = 1;
+    while (i <= rows(decompressed_RGB))
+        j = 1;
+        while (j <= columns(decompressed_RGB))
+            if (imagem_RGB(i, j, 3) != 0)
+                norm = (decompressed_RGB(i, j, 3) - imagem_RGB(i, j, 3))^2;
+                errB += norm/(imagem_RGB(i, j, 3)^2); 
+            endif
+            j += 1;
+        endwhile
+        i += 1;
+    endwhile
+    errB = sqrt(errB);
+    result = (errR + errG + errB)/3;
+    return;
+endfunction
+
 tam = 500;
 k = 2;
 h = 0.001;
@@ -334,6 +390,10 @@ h = 0.001;
 imagem_RGB = generate_image(tam);
 compressed_RGB = compress(imagem_RGB, k);
 decompressed_RGB_1 = decompress(compressed_RGB, 1, k, h);
+error1 = calculateError(imagem_RGB, decompressed_RGB_1);
 #{
 decompressed_RGB_2 = decompress(compressed_RGB, 2, k, h);
+error2 = calculateError(imagem_RGB, decompressed_RGB_2);
 #}
+
+disp(error1);
