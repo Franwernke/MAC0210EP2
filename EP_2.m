@@ -272,7 +272,7 @@ function result = decompress(compressedImg, method, k, h)
   
   n = rows(matriz_RGB);
 
-  p = n + (n - 1)*k + 1;
+  p = n + (n - 1)*k;
   
   #{
   display(n)
@@ -339,9 +339,11 @@ function result = calculateError(imagem_RGB, decompressed_RGB)
     [X, map] = rgb2ind(matriz);
     imagem_RGB = ind2rgb(X, map);
     
-    matriz_dif_R = imagem_RGB(:,:,1) - decompressed_RGB(:,:,1);
-    matriz_dif_G = imagem_RGB(:,:,2) - decompressed_RGB(:,:,2);
-    matriz_dif_B = imagem_RGB(:,:,3) - decompressed_RGB(:,:,3);
+    tamNovo = rows(decompressed_RGB);
+    
+    matriz_dif_R = imagem_RGB(1:tamNovo,1:tamNovo,1) - decompressed_RGB(:,:,1);
+    matriz_dif_G = imagem_RGB(1:tamNovo,1:tamNovo,2) - decompressed_RGB(:,:,2);
+    matriz_dif_B = imagem_RGB(1:tamNovo,1:tamNovo,3) - decompressed_RGB(:,:,3);
     
     errR = norm(matriz_dif_R, 2)/norm(imagem_RGB(:,:,1), 2);
     errG = norm(matriz_dif_G, 2)/norm(imagem_RGB(:,:,2), 2);
