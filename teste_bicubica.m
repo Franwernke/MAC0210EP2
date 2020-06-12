@@ -7,7 +7,7 @@ function result = f(x, y)
 endfunction
 
 function result = f_x(x, y, h)
-  
+    
   #  result = cos(x)*cos(y);
   
   result = (f(x+h, y) - f(x-h, y))/2*h;

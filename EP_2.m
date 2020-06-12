@@ -222,6 +222,7 @@ function result = compress(originalImg, k)
   #}
   
   p = rows(matriz_RGB);
+  
   n = floor((p + k)/(1 + k));
   
   #{
@@ -270,7 +271,8 @@ function result = decompress(compressedImg, method, k, h)
   matriz_RGB = ind2rgb(X, map);
   
   n = rows(matriz_RGB);
-  p = n + (n - 1)*k;
+
+  p = n + (n - 1)*k + 1;
   
   #{
   display(n)
@@ -337,48 +339,14 @@ function result = calculateError(imagem_RGB, decompressed_RGB)
     [X, map] = rgb2ind(matriz);
     imagem_RGB = ind2rgb(X, map);
     
-    errR = 0;
-    errG = 0;
-    errB = 0;
-    i = 1;
-    while (i <= rows(decompressed_RGB))
-        j = 1;
-        while (j <= columns(decompressed_RGB))
-            if (imagem_RGB(i, j, 1) != 0)
-              norm = (decompressed_RGB(i, j, 1) - imagem_RGB(i, j, 1))^2;
-              errR += norm/(imagem_RGB(i, j, 1)^2);              
-            endif
-            j += 1;
-        endwhile
-        i += 1;
-    endwhile
-    errR = sqrt(errR);
-    i = 1;
-    while (i <= rows(decompressed_RGB))
-        j = 1;
-        while (j <= columns(decompressed_RGB))
-            if (imagem_RGB(i, j, 2) != 0)
-                norm = (decompressed_RGB(i, j, 2) - imagem_RGB(i, j, 2))^2;
-                errG += norm/(imagem_RGB(i, j, 2)^2);
-            endif
-            j += 1;
-        endwhile
-        i += 1;
-    endwhile
-    errG = sqrt(errG);
-    i = 1;
-    while (i <= rows(decompressed_RGB))
-        j = 1;
-        while (j <= columns(decompressed_RGB))
-            if (imagem_RGB(i, j, 3) != 0)
-                norm = (decompressed_RGB(i, j, 3) - imagem_RGB(i, j, 3))^2;
-                errB += norm/(imagem_RGB(i, j, 3)^2); 
-            endif
-            j += 1;
-        endwhile
-        i += 1;
-    endwhile
-    errB = sqrt(errB);
+    matriz_dif_R = imagem_RGB(:,:,1) - decompressed_RGB(:,:,1);
+    matriz_dif_G = imagem_RGB(:,:,2) - decompressed_RGB(:,:,2);
+    matriz_dif_B = imagem_RGB(:,:,3) - decompressed_RGB(:,:,3);
+    
+    errR = norm(matriz_dif_R, 2)/norm(imagem_RGB(:,:,1), 2);
+    errG = norm(matriz_dif_G, 2)/norm(imagem_RGB(:,:,2), 2);
+    errB = norm(matriz_dif_B, 2)/norm(imagem_RGB(:,:,3), 2);
+    
     result = (errR + errG + errB)/3;
     return;
 endfunction
