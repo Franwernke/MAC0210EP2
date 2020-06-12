@@ -339,11 +339,12 @@ function result = calculateError(imagem_RGB, decompressed_RGB)
     [X, map] = rgb2ind(matriz);
     imagem_RGB = ind2rgb(X, map);
     
-    tamNovo = rows(decompressed_RGB);
+    tamNovoRows = rows(decompressed_RGB);
+    tamNovoCols = columns(decompressed_RGB);
     
-    matriz_dif_R = imagem_RGB(1:tamNovo,1:tamNovo,1) - decompressed_RGB(:,:,1);
-    matriz_dif_G = imagem_RGB(1:tamNovo,1:tamNovo,2) - decompressed_RGB(:,:,2);
-    matriz_dif_B = imagem_RGB(1:tamNovo,1:tamNovo,3) - decompressed_RGB(:,:,3);
+    matriz_dif_R = imagem_RGB(1:tamNovoRows,1:tamNovoCols,1) - decompressed_RGB(:,:,1);
+    matriz_dif_G = imagem_RGB(1:tamNovoRows,1:tamNovoCols,2) - decompressed_RGB(:,:,2);
+    matriz_dif_B = imagem_RGB(1:tamNovoRows,1:tamNovoCols,3) - decompressed_RGB(:,:,3);
     
     errR = norm(matriz_dif_R, 2)/norm(imagem_RGB(:,:,1), 2);
     errG = norm(matriz_dif_G, 2)/norm(imagem_RGB(:,:,2), 2);
