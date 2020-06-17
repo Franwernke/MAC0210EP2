@@ -155,7 +155,7 @@ function result = bicubic(decompressed_RGB, k, h)
       j = 1;
       while(j <= columns(decompressed_RGB) - k - 1)
         
-        x_2 = i + k + 1;
+        x_2 = i + k + 1;  
         y_2 = j;
         x_1 = i;
         y_1 = j + k + 1;
