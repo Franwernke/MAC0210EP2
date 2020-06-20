@@ -8,27 +8,27 @@ endfunction
 
 function result = f_x(x, y, h)
     
-  #  result = cos(x)*cos(y);
+    result = cos(x)*cos(y);
   
-  result = (f(x+h, y) - f(x-h, y))/2*h;
+  #result = (f(x+h, y) - f(x-h, y))/2*h;
   
   return;
 endfunction
 
 function result = f_y(x, y, h)
   
-  #  result = sin(x)*(-sin(y));
+   result = sin(x)*(-sin(y));
   
-  result = (f(x, y+h) - f(x, y-h))/2*h;
+  # result = (f(x, y+h) - f(x, y-h))/2*h;
   
   return;
 endfunction
 
 function result = f_y_x(x, y, h)
   
-  #  result = cos(x)*(-sin(y));
+   result = cos(x)*(-sin(y));
   
-  result = (f_y(x+h, y, h) - f_y(x-h, y, h))/2*h;
+  #result = (f_y(x+h, y, h) - f_y(x-h, y, h))/2*h;
   
   return;
 endfunction
@@ -88,11 +88,11 @@ while(i <= 200)
   j = 1;
   while(j <= 200)
     matriz_f_1(201-i, j) = f((x_1 + (j-1)*h), (y_1 + (i-1)*h));
-    matriz_a_1(201-i, j) = p(a, x_1 + (j-1)*h, (y_1 + (i-1)*h));
+    matriz_a_1(201-i, j) = p(a, (x_1 + (j-1))*h, (y_1 + (i-1))*h);
     j = j + 1;
   endwhile
   i = i + 1;
 endwhile
 
 disp(a);
-imagesc(matriz_a_1);
+imagesc(matriz_f_1);
