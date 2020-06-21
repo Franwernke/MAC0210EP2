@@ -129,12 +129,13 @@ function r1 = f_y(x, y, img, h, k)
   dependendo da situação)
   #}
   if (y == 1)
-    r1 = (img(x,y+1) - img(x,y))/(2*h);
+    r1 = (img(x,y+1+k) - img(x,y))/(h);
   elseif (y == columns(img)) 
-    r1 = (img(x,y) - img(x,y-1))/(2*h);
+    r1 = (img(x,y) - img(x,y-1-k))/(h);
   else
-    r1 = (img(x,y-1) - img(x,y+1))/(2*h);
-  endif    
+    r1 = (img(x,y+1+k) - img(x,y-1-k))/(2*h);
+  endif
+  return; 
 endfunction;
 
 function r2 = f_x(x, y, img, h, k)
@@ -143,37 +144,58 @@ function r2 = f_x(x, y, img, h, k)
   dependendo da situação)
   #}
   if (x == 1)
-    r2 = (img(x+1,y) - img(x,y))/(2*h);
+    r2 = (img(x+1+k,y) - img(x,y))/(h);
   elseif (x == rows(img))
-    r2 = (img(x,y) - img(x-1,y))/(2*h);
+    r2 = (img(x,y) - img(x-1-k,y))/(h);
   else
-    r2 = (img(x-1,y) - img(x+1,y))/(2*h);
-  endif    
+    r2 = (img(x+1+k,y) - img(x-1-k,y))/(2*h);
+  endif
+  return;  
 endfunction;
 
-function r3 = f_y_x(x, y, img, h, k) 
+function r3 = f_y_x(x, y, img, h, k)
   #{
     Derivada parcial de em relação a x e y
   #}
-   r3 = (f_x(x,y,img, h, k) - f_y(x,y,img, h, k))/(2*h);
+  if(x == 1)
+    r3 = (f_y(x+1+k, y, img, h, k) - f_y(x, y, img, h, k))/h;
+  elseif (x == rows(img))
+    r3 = (f_y(x, y, img, h, k) - f_y(x-1-k, y, img, h, k))/h;
+  else
+    r3 = (f_y(x+1+k, y, img, h, k) - f_y(x-1-k, y, img, h, k))/(2*h);
+  endif
+  return;
 endfunction
 
 function result = bicubic(decompressed_RGB, k, h)
    
     B = [1, 0, 0, 0;...
-         0, 0, 1, 0;...
-         -3, 3, -2, -1;...
-         2, -2, 1, 1]; 
+         1, (k+1)*h, ((k+1)*h)^2, ((k+1)*h)^3;...
+         0, 1, 0, 0;...
+         0, 1, 2*(k+1)*h, 3*(((k+1)*h)^2)];
+    
+    #{
+    B = [1, 0, 0, 0;...
+         1, 1, 1, 1;...
+         0, 1, 0, 0;...
+         0, 1, 2, 3];
+    #}
+         
+    B_inv = inv(B);
+    B_t = transpose(B);
+    B_t_inv = inv(B_t);
+    
+    decompressed_RGB_final = zeros(rows(decompressed_RGB), columns(decompressed_RGB), 3);
     
     i = 1;
     while(i <= rows(decompressed_RGB) - k - 1)
       j = 1;
       while(j <= columns(decompressed_RGB) - k - 1)
         
-        x_2 = i + k + 1;  
-        y_2 = j;
-        x_1 = i;
-        y_1 = j + k + 1;
+        x_1 = i + k + 1;
+        y_1 = j;
+        x_2 = i;
+        y_2 = j + k + 1;
         
         # Valor da imagem nos 4 pontos que delimitam o quadrado interpolado
         f_1 = [decompressed_RGB(x_1, y_1, 1), decompressed_RGB(x_1, y_1, 2), decompressed_RGB(x_1, y_1, 3)];
@@ -191,6 +213,8 @@ function result = bicubic(decompressed_RGB, k, h)
          f_x(x_1, y_1, Red_Img, h, k), f_x(x_1, y_2, Red_Img, h, k), f_y_x(x_1, y_1, Red_Img, h, k), f_y_x(x_1, y_2, Red_Img, h, k);...
          f_x(x_2, y_1, Red_Img, h, k), f_x(x_2, y_2, Red_Img, h, k), f_y_x(x_2, y_1, Red_Img, h, k), f_y_x(x_2, y_2, Red_Img, h, k)];
         
+        display(matriz_fs_R);
+        
         matriz_fs_G = ...
         [f_1(2), f_2(2), f_y(x_1, y_1, Green_Img, h, k), f_y(x_1, y_2, Green_Img, h, k);...
          f_3(2), f_4(2), f_y(x_2, y_1, Green_Img, h, k), f_y(x_2, y_2, Green_Img, h, k);...
@@ -204,37 +228,44 @@ function result = bicubic(decompressed_RGB, k, h)
          f_x(x_2, y_1, Blue_Img, h, k), f_x(x_2, y_2, Blue_Img, h, k), f_y_x(x_2, y_1, Blue_Img, h, k), f_y_x(x_2, y_2, Blue_Img, h, k)];
         
         
-        a_R = B*matriz_fs_R*transpose(B);
-        a_G = B*matriz_fs_G*transpose(B);
-        a_B = B*matriz_fs_B*transpose(B);
+        a_R = B_inv*matriz_fs_R*B_t_inv;
+        a_G = B_inv*matriz_fs_G*B_t_inv;
+        a_B = B_inv*matriz_fs_B*B_t_inv;
         
         z = i;
         while(z <= i + k + 1)
           w = j;
           while(w <= j + k + 1)
             if(decompressed_RGB(z, w, 1) == 0)
-              decompressed_RGB(z, w, 1) = p_2(a_R, (z-1)*h, (w-1)*h);
+              decompressed_RGB_final(z, w, 1) = p_2(a_R, (z-1)*h, (w-1)*h);
+            else
+              decompressed_RGB_final(z, w, 1) = decompressed_RGB(z, w, 1);
             endif
           
             if(decompressed_RGB(z, w, 2) == 0)
-              decompressed_RGB(z, w, 2) = p_2(a_G, (z-1)*h, (w-1)*h);
+              decompressed_RGB_final(z, w, 2) = p_2(a_G, (z-1)*h, (w-1)*h);
+            else
+              decompressed_RGB_final(z, w, 2) = decompressed_RGB(z, w, 2);
             endif
           
             if(decompressed_RGB(z, w, 3) == 0)
-              decompressed_RGB(z, w, 3) = p_2(a_B, (z-1)*h, (w-1)*h);
+              decompressed_RGB_final(z, w, 3) = p_2(a_B, (z-1)*h, (w-1)*h);
+            else
+              decompressed_RGB_final(z, w, 3) = decompressed_RGB(z, w, 3);
             endif
           
             w = w + 1;
           endwhile
           z += 1;
         endwhile
-        j += 1;
+        
+        j = j + k + 1;
       endwhile
-      disp(i);
-      i += 1;
+      
+      i = i + k + 1;
     endwhile
     
-    result = decompressed_RGB;
+    result = decompressed_RGB_final;
     return;
     
 endfunction
@@ -250,7 +281,6 @@ quadrado de diagonais inferior esquerda (1, 1) e superior direita (1.5, 1.5).
 
 function result = generate_image(tam)
   matriz_RGB = zeros(tam, tam, 3);
-  
   x = 0;
   y = 0;
   h = 0.001;
