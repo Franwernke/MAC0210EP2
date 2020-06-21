@@ -110,16 +110,9 @@ Interpolação Bicubica
 
 function result = p_2(a, x, y)
   # Polinômio interpolador com a matriz de coeficientes a
-  result = 0;
-  i = 1;
-  while(i <= 4)
-    j = 1;
-    while(j <= 4)
-      result = result + a(i, j)*(x^(i-1))*(y^(j-1));
-      j = j + 1;
-    endwhile
-    i = i + 1;
-  endwhile
+  vetor_x = [1, x, x^2, x^3];
+  vetor_y = [1; y; y^2; y^3];
+  result = vetor_x*a*vetor_y;
   return;
 endfunction
 
@@ -128,6 +121,7 @@ function r1 = f_y(x, y, img, h, k)
     Derivada parcial de em relação a y (usando forward, backward ou central 
   dependendo da situação)
   #}
+  
   if (y == 1)
     r1 = (img(x,y+1+k) - img(x,y))/(h);
   elseif (y == columns(img)) 
@@ -135,7 +129,7 @@ function r1 = f_y(x, y, img, h, k)
   else
     r1 = (img(x,y+1+k) - img(x,y-1-k))/(2*h);
   endif
-  return; 
+  return;
 endfunction;
 
 function r2 = f_x(x, y, img, h, k)
@@ -170,9 +164,9 @@ endfunction
 function result = bicubic(decompressed_RGB, k, h)
    
     B = [1, 0, 0, 0;...
-         1, (k+1)*h, ((k+1)*h)^2, ((k+1)*h)^3;...
+         1, (k+2)*h, ((k+2)*h)^2, ((k+2)*h)^3;...
          0, 1, 0, 0;...
-         0, 1, 2*(k+1)*h, 3*(((k+1)*h)^2)];
+         0, 1, 2*((k+2)*h), 3*(((k+2)*h)^2)];
     
     #{
     B = [1, 0, 0, 0;...
@@ -180,10 +174,14 @@ function result = bicubic(decompressed_RGB, k, h)
          0, 1, 0, 0;...
          0, 1, 2, 3];
     #}
+    
          
     B_inv = inv(B);
     B_t = transpose(B);
     B_t_inv = inv(B_t);
+    
+    display(B_inv);
+    display(B_t_inv);
     
     decompressed_RGB_final = zeros(rows(decompressed_RGB), columns(decompressed_RGB), 3);
     
@@ -207,14 +205,33 @@ function result = bicubic(decompressed_RGB, k, h)
         Green_Img = decompressed_RGB(:,:,2);
         Blue_Img = decompressed_RGB(:,:,3);
         
+        #{
+        matriz_fs_R = ...
+        [f_1(1), f_2(1), 0, 0;...
+         f_3(1), f_4(1), 0, 0;...
+         cos((x_1-1)*h), cos((x_1-1)*h), 0, 0;...
+         cos((x_2-1)*h), cos((x_2-1)*h), 0, 0];
+        
+        matriz_fs_G = ...
+        [f_1(2), f_2(2), cos((y_1-1)*h)/2, cos((y_2-1)*h)/2;...
+         f_3(2), f_4(2), cos((y_1-1)*h)/2, cos((y_2-1)*h)/2;...
+         cos((x_1-1)*h)/2, cos((x_1-1)*h)/2, 0, 0;...
+         cos((x_2-1)*h)/2, cos((x_2-1)*h)/2, 0, 0];
+         
+         matriz_fs_B = ...
+        [f_1(3), f_2(3), 0, 0;...
+         f_3(3), f_4(3), 0, 0;...
+         cos((x_1-1)*h), cos((x_1-1)*h), 0, 0;...
+         cos((x_2-1)*h), cos((x_2-1)*h), 0, 0];
+         #}
+        
+        
         matriz_fs_R = ...
         [f_1(1), f_2(1), f_y(x_1, y_1, Red_Img, h, k), f_y(x_1, y_2, Red_Img, h, k);...
          f_3(1), f_4(1), f_y(x_2, y_1, Red_Img, h, k), f_y(x_2, y_2, Red_Img, h, k);...
          f_x(x_1, y_1, Red_Img, h, k), f_x(x_1, y_2, Red_Img, h, k), f_y_x(x_1, y_1, Red_Img, h, k), f_y_x(x_1, y_2, Red_Img, h, k);...
          f_x(x_2, y_1, Red_Img, h, k), f_x(x_2, y_2, Red_Img, h, k), f_y_x(x_2, y_1, Red_Img, h, k), f_y_x(x_2, y_2, Red_Img, h, k)];
-        
-        display(matriz_fs_R);
-        
+      
         matriz_fs_G = ...
         [f_1(2), f_2(2), f_y(x_1, y_1, Green_Img, h, k), f_y(x_1, y_2, Green_Img, h, k);...
          f_3(2), f_4(2), f_y(x_2, y_1, Green_Img, h, k), f_y(x_2, y_2, Green_Img, h, k);...
@@ -227,10 +244,9 @@ function result = bicubic(decompressed_RGB, k, h)
          f_x(x_1, y_1, Blue_Img, h, k), f_x(x_1, y_2, Blue_Img, h, k), f_y_x(x_1, y_1, Blue_Img, h, k), f_y_x(x_1, y_2, Blue_Img, h, k);...
          f_x(x_2, y_1, Blue_Img, h, k), f_x(x_2, y_2, Blue_Img, h, k), f_y_x(x_2, y_1, Blue_Img, h, k), f_y_x(x_2, y_2, Blue_Img, h, k)];
         
-        
-        a_R = B_inv*matriz_fs_R*B_t_inv;
-        a_G = B_inv*matriz_fs_G*B_t_inv;
-        a_B = B_inv*matriz_fs_B*B_t_inv;
+        a_R = (B_inv*matriz_fs_R)*B_t_inv;
+        a_G = (B_inv*matriz_fs_G)*B_t_inv;
+        a_B = (B_inv*matriz_fs_B)*B_t_inv;
         
         z = i;
         while(z <= i + k + 1)
@@ -274,8 +290,8 @@ endfunction
  Função que gera imagem. Ela pega uma matriz de 3 dimensões - uma pra R, uma
 pra G e uma pra B e calcula o valor das respectivas funções em tam*tam pon-
 tos. Esses pontos começam em (1, 1) e vão até (1 + tam*h, 1 + tam*h). 
-Por padrão, tam = 500 e h = 0.001, portanto checamos 500*500 pontos de um 
-quadrado de diagonais inferior esquerda (1, 1) e superior direita (1.5, 1.5).
+Por padrão, tam = 500 e h = 0.1, portanto checamos 500*500 pontos de um 
+quadrado de diagonais inferior esquerda (1, 1) e superior direita (51, 51).
  Essa função cria uma imagem "imagem_RGB.tif" baseado nessa matriz. 
 #}
 
@@ -283,7 +299,7 @@ function result = generate_image(tam)
   matriz_RGB = zeros(tam, tam, 3);
   x = 0;
   y = 0;
-  h = 0.001;
+  h = 50;
   
   i = 1;
   j = 1;
@@ -307,17 +323,18 @@ endfunction
 
 tam = 500;
 k = 2;
-h = 0.001;
+h = 50;
 
 imagem_RGB = generate_image(tam);
+imagem_RGB = "hotel.png";
+
 compressed_RGB = compress(imagem_RGB, k);
 #{
 decompressed_RGB_1 = decompress(compressed_RGB, 1, k, h);
 error1 = calculateError(imagem_RGB, decompressed_RGB_1);
-#}
-decompressed_RGB_2 = decompress(compressed_RGB, 2, k, h);
-#{
-error2 = calculateError(imagem_RGB, decompressed_RGB_2);
+display(error1);
 #}
 
-#disp(error2);
+decompressed_RGB_2 = decompress(compressed_RGB, 2, k, h);
+error2 = calculateError(imagem_RGB, decompressed_RGB_2);
+display(error2);
