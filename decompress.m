@@ -39,16 +39,17 @@ function result = decompress(compressedImg, method, k, h)
   
   if(method == 1)
     decompressed_RGB = bilinear(decompressed_RGB, k, h);
+    imwrite(decompressed_RGB, "decompressed_RGB.png");
+    result = "decompressed_RGB.png";
   endif
   
   
   if(method == 2)
     decompressed_RGB = bicubic(decompressed_RGB, k, h);
+    imwrite(decompressed_RGB, "decompressed_RGB_2.png");
+    result = "decompressed_RGB_2.png";
   endif
   
-  imwrite(decompressed_RGB, "decompressed_RGB.png");
-  
-  result = "decompressed_RGB.png";
   return;
   
 endfunction
