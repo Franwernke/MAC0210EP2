@@ -2,7 +2,7 @@ x = 0;
 y = 0;
 
 #{
-Funções RGB, chico! Essas são as sugeridas inicialmente pelo professor!
+Funções RGB inicialmente sugeridas pelo professor.
 #}
 
 function result = R(x, y)
@@ -21,10 +21,11 @@ function result = B(x, y)
 endfunction
 
 #{
-Bilinear!
+Interpolação Bilinear
 #}
 
 function result = p_1(a, x, y)
+  # Polinômio interpolador com o vetor de coeficientes a
   result = a(1,1) + a(2,1)*x + a(3,1)*y + a(4,1)*x*y;
   return;
 endfunction
@@ -103,9 +104,12 @@ function result = bilinear(decompressed_RGB, k, h)
   
 endfunction
 
-
+#{
+Interpolação Bicubica
+#}
 
 function result = p_2(a, x, y)
+  # Polinômio interpolador com a matriz de coeficientes a
   result = 0;
   i = 1;
   while(i <= 4)
@@ -119,7 +123,11 @@ function result = p_2(a, x, y)
   return;
 endfunction
 
-function r1 = f_y(x, y, img, h, k) 
+function r1 = f_y(x, y, img, h, k)
+  #{
+    Derivada parcial de em relação a y (usando forward, backward ou central 
+  dependendo da situação)
+  #}
   if (y == 1)
     r1 = (img(x,y+1) - img(x,y))/(2*h);
   elseif (y == columns(img)) 
@@ -130,6 +138,10 @@ function r1 = f_y(x, y, img, h, k)
 endfunction;
 
 function r2 = f_x(x, y, img, h, k)
+  #{
+    Derivada parcial de em relação a x (usando forward, backward ou central 
+  dependendo da situação)
+  #}
   if (x == 1)
     r2 = (img(x+1,y) - img(x,y))/(2*h);
   elseif (x == rows(img))
@@ -140,6 +152,9 @@ function r2 = f_x(x, y, img, h, k)
 endfunction;
 
 function r3 = f_y_x(x, y, img, h, k) 
+  #{
+    Derivada parcial de em relação a x e y
+  #}
    r3 = (f_x(x,y,img, h, k) - f_y(x,y,img, h, k))/(2*h);
 endfunction
 
@@ -225,19 +240,12 @@ function result = bicubic(decompressed_RGB, k, h)
 endfunction
 
 #{
-Função que gera imagem! ela pega uma matriz de 3 dimensões - uma pra R, uma
+ Função que gera imagem. Ela pega uma matriz de 3 dimensões - uma pra R, uma
 pra G e uma pra B e calcula o valor das respectivas funções em tam*tam pon-
-tos. Esses pontos começam em (1, 1) e vão até (1 + tam*h, 1 + tam*h). No
-caso que eu deixei por padrão, tam = 500 e h = 0.001, portanto checamos
-500*500 pontos d'um quadrado de digonais inferior esquerda (1, 1) e superi-
-or direita (1.5, 1.5). Desculpe a bagunça no código da matriz, mas temos
-que indexar dessa forma pra funcionar baseado no canto direito superior que
-eu tinha feito no teste bilinear. Posso te explicar como funciona depois,
-mas pode confiar que isso tá funfando! Essa função cria uma imagem
-"imagem_RGB.tif" baseado nessa matriz. Checa a imagem no seu diretório! Cê
-vai ficar orgulhoso :)
-
-OBS: testes com tam >> 500 deixam o programa BEM lento. Take care ;)
+tos. Esses pontos começam em (1, 1) e vão até (1 + tam*h, 1 + tam*h). 
+Por padrão, tam = 500 e h = 0.001, portanto checamos 500*500 pontos de um 
+quadrado de diagonais inferior esquerda (1, 1) e superior direita (1.5, 1.5).
+ Essa função cria uma imagem "imagem_RGB.tif" baseado nessa matriz. 
 #}
 
 function result = generate_image(tam)
@@ -265,163 +273,6 @@ function result = generate_image(tam)
   result = "imagem_RGB.png";
   return;
   
-endfunction
-
-#{
-Função de compressão de imagem! Ainda tô fazendo, querido! Esse primeiro
-pedaço é apenas eu pegando a imagem "imagem_RGB.tif" salva em meu computa-
-dor e lendo ela novamente. Os comentários no meio da função eram testes
-pra ver se estava funcionando direitnho e se a matriz RGB recuperada da
-imagem era 500x500 também. Funcionou perfeitamente e a matriz é 500x500
-mesmo! Yuhuuul! O resto é tudo baseado na técnica de compressão que o pro-
-fessor sugeriu no enunciado do EP.
-#}
-
-function result = compress(originalImg, k)
-  
-  [matriz, MAP] = imread(originalImg);
-  [X, map] = rgb2ind(matriz);
-  matriz_RGB = ind2rgb(X, map);
-  
-  #{
-  display(rows(matriz_RGB));
-  display(columns(matriz_RGB));
-  #}
-  #{
-  imwrite(matriz_RGB, "imagem_RGB_2.tif");
-  #}
-  
-  p = rows(matriz_RGB);
-  
-  n = floor((p + k)/(1 + k));
-  
-  #{
-  display(p);
-  display(n);
-  #}
-  
-  compressed_RGB = zeros(n, n, 3);
-  i = 1;
-  j = 1;
-  i_n = 1;
-  j_n = 1;
-  while(i <= p)
-    if(abs(rem(i,k+1))*sign(k) == 0)
-      while(j <= p)
-        if(abs(rem(j,k+1))*sign(k) == 0)
-          compressed_RGB(i_n, j_n, 1) = matriz_RGB(i, j, 1);
-          compressed_RGB(i_n, j_n, 2) = matriz_RGB(i, j, 2);
-          compressed_RGB(i_n, j_n, 3) = matriz_RGB(i, j, 3);
-          j_n = j_n + 1;
-        endif
-        j = j + 1;
-      endwhile
-      j_n = 1;
-      i_n = i_n + 1;
-    endif
-    j = 1;
-    i = i + 1;
-  endwhile
-  
-  #{
-  display(rows(compressed_RGB));
-  #}
-  
-  imwrite(compressed_RGB, "compressed_RGB.png");
-  
-  result = "compressed_RGB.png";
-  return;
-  
-endfunction
-
-function result = decompress(compressedImg, method, k, h)
-  
-  [matriz, MAP] = imread(compressedImg);
-  [X, map] = rgb2ind(matriz);
-  matriz_RGB = ind2rgb(X, map);
-  
-  n = rows(matriz_RGB);
-
-  p = n + (n - 1)*k;
-  
-  #{
-  display(n)
-  display(p);
-  #}
-  
-  decompressed_RGB = zeros(p, p, 3);
-  i = 1;
-  j = 1;
-  i_p = 1;
-  j_p = 1;
-  while(i <= n)
-    aux_i = i_p;
-    while(i_p <= aux_i + k)
-      if(i_p == aux_i)
-        while(j <= n)
-          aux_j = j_p;
-          while(j_p <= aux_j + k)
-            if(j_p == aux_j)
-              decompressed_RGB(i_p, j_p, 1) = matriz_RGB(i, j, 1);
-              decompressed_RGB(i_p, j_p, 2) = matriz_RGB(i, j, 2);
-              decompressed_RGB(i_p, j_p, 3) = matriz_RGB(i, j, 3);
-            endif
-            j_p = j_p + 1;
-          endwhile
-          j = j + 1;
-        endwhile
-      endif
-      j_p = 1;
-      i_p = i_p + 1;
-    endwhile
-    j = 1;
-    i = i + 1;
-  endwhile
-  
-  #{
-  display(rows(decompressed_RGB));
-  #}
-  
-  if(method == 1)
-    decompressed_RGB = bilinear(decompressed_RGB, k, h);
-  endif
-  
-  
-  if(method == 2)
-    decompressed_RGB = bicubic(decompressed_RGB, k, h);
-  endif
-  
-  
-  imwrite(decompressed_RGB, "decompressed_RGB.png");
-  
-  result = "decompressed_RGB.png";
-  return;
-  
-endfunction
-
-function result = calculateError(imagem_RGB, decompressed_RGB)
-    
-    [matriz, MAP] = imread(decompressed_RGB);
-    [X, map] = rgb2ind(matriz);
-    decompressed_RGB = ind2rgb(X, map);
-    
-    [matriz, MAP] = imread(imagem_RGB);
-    [X, map] = rgb2ind(matriz);
-    imagem_RGB = ind2rgb(X, map);
-    
-    tamNovoRows = rows(decompressed_RGB);
-    tamNovoCols = columns(decompressed_RGB);
-    
-    matriz_dif_R = imagem_RGB(1:tamNovoRows,1:tamNovoCols,1) - decompressed_RGB(:,:,1);
-    matriz_dif_G = imagem_RGB(1:tamNovoRows,1:tamNovoCols,2) - decompressed_RGB(:,:,2);
-    matriz_dif_B = imagem_RGB(1:tamNovoRows,1:tamNovoCols,3) - decompressed_RGB(:,:,3);
-    
-    errR = norm(matriz_dif_R, 2)/norm(imagem_RGB(:,:,1), 2);
-    errG = norm(matriz_dif_G, 2)/norm(imagem_RGB(:,:,2), 2);
-    errB = norm(matriz_dif_B, 2)/norm(imagem_RGB(:,:,3), 2);
-    
-    result = (errR + errG + errB)/3;
-    return;
 endfunction
 
 tam = 500;
